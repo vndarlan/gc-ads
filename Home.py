@@ -41,8 +41,8 @@ gif_url = "https://media.giphy.com/media/3o7TKO32FEGLZEXjyI/giphy.gif"
 st.image(gif_url, width=400)
 
 # Títulos
-st.markdown('<h1 class="title">Bem-vindo ao Dashboard</h1>', unsafe_allow_html=True)
-st.markdown('<h3 class="sub-title">Gerencie seus anúncios de forma simples e elegante</h3>', unsafe_allow_html=True)
+st.markdown('<h1 class="title">Bem-vindo a GC ADS</h1>', unsafe_allow_html=True)
+st.markdown('<h3 class="sub-title">Seu anúncio no ar em tempo recorde!</h3>', unsafe_allow_html=True)
 
 # Mensagem de orientação
 st.markdown('<p style="text-align: center; color: #666;">Utilize o menu ao lado para navegar pelas funcionalidades.</p>', unsafe_allow_html=True)
