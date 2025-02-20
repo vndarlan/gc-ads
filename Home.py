@@ -1,52 +1,50 @@
 import streamlit as st
-import requests
 
-# Título da aplicação
-st.title("Gerenciador de Anúncios - Integração n8n e Facebook")
+# Configuração da página
+st.set_page_config(page_title="Dashboard", page_icon="🌟", layout="centered")
 
-# Criação do formulário
-with st.form("form_anuncio"):
-    st.subheader("Configurações do Anúncio")
-    
-    # Seleção do idioma
-    idioma = st.selectbox("Selecione o idioma do anúncio:", ["Português", "Inglês", "Espanhol"])
-    
-    # Seleção do país
-    pais = st.selectbox("Selecione o país:", ["Brasil", "Estados Unidos", "México"])
-    
-    # Campo de descrição do anúncio
-    descricao = st.text_area("Descrição do anúncio:")
-    
-    # Upload do vídeo
-    video = st.file_uploader("Envie o vídeo do anúncio", type=["mp4", "mov"])
-    
-    # Botão de submissão
-    submit = st.form_submit_button("Criar Anúncio")
-
-# Quando o formulário for submetido
-if submit:
-    # Monta os dados do payload para enviar ao n8n
-    payload = {
-        "idioma": idioma,
-        "pais": pais,
-        "descricao": descricao,
-        # Aqui, dependendo da implementação do n8n, pode ser necessário tratar o upload do vídeo
-        # Por exemplo, salvando temporariamente ou enviando como multipart/form-data.
+# CSS customizado para um visual minimalista
+st.markdown(
+    """
+    <style>
+    body {
+        background-color: #f0f2f6;
     }
-    
-    st.write("Dados a serem enviados:", payload)
-    
-    # Exemplo de endpoint do n8n (substitua pela URL correta do seu webhook)
-    url_n8n = "http://SEU_ENDPOINT_N8N/webhook"
-    
-    try:
-        # Envia os dados para o n8n
-        resposta = requests.post(url_n8n, json=payload)
-        
-        # Verifica a resposta
-        if resposta.status_code == 200:
-            st.success("Anúncio enviado com sucesso! O fluxo no n8n foi ativado.")
-        else:
-            st.error(f"Erro ao enviar anúncio. Código de status: {resposta.status_code}")
-    except Exception as e:
-        st.error(f"Ocorreu um erro: {e}")
+    .title {
+        font-family: 'Helvetica', sans-serif;
+        text-align: center;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        color: #333;
+    }
+    .sub-title {
+        font-family: 'Helvetica', sans-serif;
+        text-align: center;
+        color: #555;
+        margin-bottom: 2rem;
+    }
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Container centralizado
+st.markdown('<div class="container">', unsafe_allow_html=True)
+
+# Exibe o GIF ou imagem (substitua o URL se desejar outro)
+gif_url = "https://media.giphy.com/media/3o7TKO32FEGLZEXjyI/giphy.gif"
+st.image(gif_url, width=400)
+
+# Títulos
+st.markdown('<h1 class="title">Bem-vindo ao Dashboard</h1>', unsafe_allow_html=True)
+st.markdown('<h3 class="sub-title">Gerencie seus anúncios de forma simples e elegante</h3>', unsafe_allow_html=True)
+
+# Mensagem de orientação
+st.markdown('<p style="text-align: center; color: #666;">Utilize o menu ao lado para navegar pelas funcionalidades.</p>', unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
