@@ -1,7 +1,11 @@
 import streamlit as st
 import pandas as pd
-
+import sys
+import os
 from db_utils import fetch_data, insert_data, overwrite_table_with_df
+
+# Adiciona o diretório raiz (pai de "pages") ao sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def app():
     st.title("Gerenciar Páginas e Contas de Anúncio")
