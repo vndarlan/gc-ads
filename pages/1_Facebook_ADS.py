@@ -2,11 +2,11 @@ import streamlit as st
 import requests
 import sys
 import os
-from db_utils import fetch_data, insert_data, overwrite_table_with_df
 
-# Adiciona o diretório raiz (pai de "pages") ao sys.path
+# Adiciona o diretório pai ao Python Path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from db_utils import fetch_data, insert_data, overwrite_table_with_df  # Import absoluto
 
 def app():
     st.title("Criar Anúncio")
@@ -30,7 +30,6 @@ def app():
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # CSS para títulos
     st.markdown("""
     <style>
         .titulo {
@@ -62,10 +61,6 @@ def app():
 
         # BLOCO 1: CRIANDO CAMPANHA
         st.markdown('<div class="titulo">Criando Campanha</div>', unsafe_allow_html=True)
-        st.write("**Tipo de compra:** Leilão")
-        st.write("**Objetivo da campanha:** Vendas")
-        st.write("**Configuração de campanha:** Campanha de vendas manual")
-
         nome_campanha_sigla = st.text_input("Nome da Campanha (Sigla):", "Ex: CC_CHILE_01")
 
         # BLOCO 2: CRIANDO CONJUNTO DE ANÚNCIOS
@@ -73,11 +68,7 @@ def app():
         st.markdown('<div class="titulo">Criando Conjunto de Anúncios</div>', unsafe_allow_html=True)
 
         nome_conjunto = st.text_input("Nome do Conjunto de Anúncios (Sigla):", nome_campanha_sigla)
-        st.write("**Local da conversão:** Site")
-
         pixel = st.text_input("Conjunto de dados (Pixel):", "Ex: Pixel_Compra_1234")
-        st.write("**Evento de Conversão**: Compra")
-
         orcamento_diario = st.number_input("Orçamento Diário (R$):", min_value=0.0, value=20.0, step=1.0)
         localizacoes = st.text_input("Localizações:", "Ex: País X, País Y")
 
@@ -87,44 +78,15 @@ def app():
         lista_idiomas = ["Português", "Espanhol", "Inglês", "Francês", "Alemão"]
         idioma_sel = st.selectbox("Idiomas:", lista_idiomas)
 
-        st.write("**Posicionamentos:** Manuais")
-        st.write("**Dispositivos:** Celular")
-        st.write("**Somente quando conectado a uma rede Wi-Fi**")
-
         # BLOCO 3: CRIANDO ANÚNCIO
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown('<div class="titulo">Criando Anúncio</div>', unsafe_allow_html=True)
 
         nome_anuncio = st.text_input("Nome do anúncio:", "Ex: Anuncio_Promocional")
-        nome_criativo_drive = st.text_input("Nome do Criativo do Drive:", "Ex: drive_video_01")
         url_site = st.text_input("URL do site:", "Ex: https://meusite.com/produtoX")
-        link_exibicao = st.text_input("Link de exibição (homepage):", "Ex: https://meusite.com")
         nome_imagem_facebook = st.text_input("Nome da imagem do Facebook:", "Ex: imagem_promo.png")
-        destino_imagem = st.text_input("Destino (link da imagem):", "Ex: https://seusite.com")
 
-        st.markdown("### Texto Principal (1 a 5)")
-        texto_principal_list = []
-        max_textos = 5
-        for i in range(max_textos):
-            txt = st.text_input(f"Texto principal #{i+1} (opcional):", key=f"texto_principal_{i}")
-            if txt.strip():
-                texto_principal_list.append(txt)
-
-        # BLOCO 4: Múltiplos Conjuntos de Anúncio
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown('<div class="titulo">Múltiplos Conjuntos de Anúncio</div>', unsafe_allow_html=True)
-
-        adicionar_varios = st.checkbox("Adicionar mais de 1 conjunto de anúncio?")
-        conjuntos = []
-        if adicionar_varios:
-            qtd = st.number_input("Quantos conjuntos adicionais?", min_value=1, max_value=10, value=1)
-            for i in range(qtd):
-                st.markdown(f"**Conjunto Extra {i+1}**")
-                nome_criativo_extra = st.text_input(f"Nome do Criativo {i+1}:", key=f"nome_criativo_{i+1}")
-                conjuntos.append({"nome_criativo_drive": nome_criativo_extra})
-                st.markdown("---")
-
-        # URL do seu webhook
+        # BLOCO 4: Webhook
         universal_webhook_url = "https://minha-url-unica.com/webhook"
 
         if st.button("Criar Anúncio"):
@@ -133,51 +95,35 @@ def app():
                 "conta_id": selected_account_id,
                 "token_pagina": selected_token,
                 "campanha": {
-                    "tipo_compra": "Leilão",
-                    "objetivo": "Vendas",
-                    "configuracao_campanha": "Campanha de vendas manual",
                     "nome_campanha_sigla": nome_campanha_sigla
                 },
                 "conjunto": {
                     "nome_conjunto_sigla": nome_conjunto,
-                    "local_conversao": "Site",
                     "pixel": pixel,
-                    "evento_conversao": "Compra",
                     "orcamento_diario": orcamento_diario,
                     "localizacoes": localizacoes,
                     "idade_min": idade_min,
                     "idade_max": idade_max,
                     "genero": genero,
-                    "idioma": idioma_sel,
-                    "posicionamentos": "Manuais",
-                    "dispositivos": "Celular",
-                    "wifi_only": True
+                    "idioma": idioma_sel
                 },
                 "anuncio": {
                     "nome_anuncio": nome_anuncio,
-                    "nome_criativo_drive": nome_criativo_drive,
                     "url_site": url_site,
-                    "link_exibicao": link_exibicao,
-                    "nome_imagem_facebook": nome_imagem_facebook,
-                    "destino_imagem": destino_imagem,
-                    "textos_principais": texto_principal_list
-                },
-                "conjuntos_extra": conjuntos
+                    "nome_imagem_facebook": nome_imagem_facebook
+                }
             }
-
-            st.write("**Payload enviado**:", payload)
 
             try:
                 response = requests.post(universal_webhook_url, json=payload)
                 if response.status_code == 200:
                     st.success("Anúncio enviado com sucesso!")
                 else:
-                    st.error(f"Erro ao enviar anúncio. Código: {response.status_code} - {response.text}")
+                    st.error(f"Erro ao enviar anúncio. Código: {response.status_code}")
             except Exception as e:
                 st.error(f"Ocorreu um erro ao enviar o anúncio: {e}")
 
-            # Fecha o pseudo-popup
             st.session_state.show_popup = False
 
-def main():
+if __name__ == "__main__":
     app()
