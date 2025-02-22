@@ -1,35 +1,31 @@
-# pages/2_Criar_Anuncio.py
 import streamlit as st
 import requests
+
 from db_utils import fetch_data
 
 def app():
     st.title("Criar Anúncio")
 
-    # Carrega dados do banco
     df = fetch_data()
     if df.empty:
         st.warning("Não há Páginas/Contas cadastradas. Vá em 'Gerenciar Páginas'.")
         return
 
-    # Selecionar a Página
     paginas_disponiveis = df["nome_pagina"].unique().tolist()
     selected_page = st.selectbox("Selecione a Página para vincular o anúncio:", paginas_disponiveis)
 
-    # Filtra as contas daquela página
     df_page = df[df["nome_pagina"] == selected_page]
     contas_disponiveis = df_page["conta_anuncio"].unique().tolist()
 
-    # Gerencia estado para pseudo-popup
     if "show_popup" not in st.session_state:
         st.session_state.show_popup = False
 
     if st.button("Novo Anúncio"):
         st.session_state.show_popup = True
 
-    st.markdown("<br>", unsafe_allow_html=True)  # Linha em branco
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    # CSS para títulos (exemplo)
+    # CSS para títulos
     st.markdown("""
     <style>
         .titulo {
@@ -45,30 +41,21 @@ def app():
     </style>
     """, unsafe_allow_html=True)
 
-    # Só exibe o formulário se show_popup == True
     if st.session_state.show_popup:
-        # Caso não haja contas
         if len(contas_disponiveis) == 0:
-            st.error("Não há contas de anúncio cadastradas para esta página.")
+            st.error("Não há contas de anúncio para esta página.")
             return
 
-        # =========================================
-        # Selecionar Conta Vinculada
-        # =========================================
         st.markdown('<div class="titulo">Selecione a Conta Vinculada</div>', unsafe_allow_html=True)
         selected_account_name = st.selectbox("Conta de Anúncio:", contas_disponiveis)
 
-        # Pega os dados da conta selecionada
-        row_selecionada = df_page[df_page["conta_anuncio"] == selected_account_name].iloc[0]
-        selected_account_id = row_selecionada["id_conta_anuncio"]
-        selected_token = row_selecionada["token_pagina"]
-        # Se precisar do ID da página: row_selecionada["id_pagina"]
+        row = df_page[df_page["conta_anuncio"] == selected_account_name].iloc[0]
+        selected_account_id = row["id_conta_anuncio"]
+        selected_token = row["token_pagina"]
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # =========================================
-        #  BLOCO 1: CRIANDO CAMPANHA
-        # =========================================
+        # BLOCO 1: CRIANDO CAMPANHA
         st.markdown('<div class="titulo">Criando Campanha</div>', unsafe_allow_html=True)
         st.write("**Tipo de compra:** Leilão")
         st.write("**Objetivo da campanha:** Vendas")
@@ -76,9 +63,7 @@ def app():
 
         nome_campanha_sigla = st.text_input("Nome da Campanha (Sigla):", "Ex: CC_CHILE_01")
 
-        # =========================================
-        #  BLOCO 2: CRIANDO CONJUNTO DE ANÚNCIOS
-        # =========================================
+        # BLOCO 2: CRIANDO CONJUNTO DE ANÚNCIOS
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown('<div class="titulo">Criando Conjunto de Anúncios</div>', unsafe_allow_html=True)
 
@@ -101,9 +86,7 @@ def app():
         st.write("**Dispositivos:** Celular")
         st.write("**Somente quando conectado a uma rede Wi-Fi**")
 
-        # =========================================
-        #  BLOCO 3: CRIANDO ANÚNCIO
-        # =========================================
+        # BLOCO 3: CRIANDO ANÚNCIO
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown('<div class="titulo">Criando Anúncio</div>', unsafe_allow_html=True)
 
@@ -122,9 +105,7 @@ def app():
             if txt.strip():
                 texto_principal_list.append(txt)
 
-        # =========================================
-        #  BLOCO 4: MÚLTIPLOS CONJUNTOS DE ANÚNCIO
-        # =========================================
+        # BLOCO 4: Múltiplos Conjuntos de Anúncio
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown('<div class="titulo">Múltiplos Conjuntos de Anúncio</div>', unsafe_allow_html=True)
 
@@ -141,12 +122,11 @@ def app():
         # URL do seu webhook
         universal_webhook_url = "https://minha-url-unica.com/webhook"
 
-        # Botão Final
         if st.button("Criar Anúncio"):
             payload = {
                 "pagina": selected_page,
-                "conta_id": selected_account_id if selected_account_id else "",
-                "token_pagina": selected_token if selected_token else "",
+                "conta_id": selected_account_id,
+                "token_pagina": selected_token,
                 "campanha": {
                     "tipo_compra": "Leilão",
                     "objetivo": "Vendas",
