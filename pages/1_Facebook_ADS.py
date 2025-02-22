@@ -87,7 +87,7 @@ def app():
         nome_imagem_facebook = st.text_input("Nome da imagem do Facebook:", "Ex: imagem_promo.png")
 
         # BLOCO 4: Webhook
-        universal_webhook_url = "https://minha-url-unica.com/webhook"
+        universal_webhook_url = "https://primary-production-7d92.up.railway.app/webhook-test/f708e609-9e8b-4940-9cec-55c8cdceb2f7"
 
         if st.button("Criar Anúncio"):
             payload = {
