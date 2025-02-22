@@ -1,36 +1,26 @@
-# db_utils.py
+import streamlit as st
 import psycopg2
 import pandas as pd
-import streamlit as st
 
 def get_connection():
     """
-    Cria a conexão com o Postgres usando as credenciais
-    guardadas em st.secrets.
-    Certifique-se de ter configurado no Streamlit Cloud (Secrets)
-    algo como:
-    [DB]
-    HOST = "..."
-    PORT = "..."
-    NAME = "..."
-    USER = "..."
-    PASSWORD = "..."
+    Abre conexão com o Postgres a partir de DATABASE_URL,
+    que deve estar em st.secrets["DATABASE_URL"] no Streamlit Cloud.
+    Exemplo no secrets.toml:
+    
+    DATABASE_URL = "postgresql://usuario:senha@host:porta/nome_do_banco"
     """
-    conn = psycopg2.connect(
-        host=st.secrets["DB"]["HOST"],
-        port=st.secrets["DB"]["PORT"],
-        database=st.secrets["DB"]["NAME"],
-        user=st.secrets["DB"]["USER"],
-        password=st.secrets["DB"]["PASSWORD"],
-    )
+    db_url = st.secrets["DATABASE_URL"]
+    conn = psycopg2.connect(db_url)
     return conn
 
 def create_table_if_not_exists():
-    """Cria a tabela 'paginas' se ainda não existir."""
+    """
+    Exemplo de criação de tabela (você pode ajustar campos e tipos conforme seu caso).
+    """
     conn = get_connection()
     with conn.cursor() as cur:
-        cur.execute(
-            """
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS paginas (
                 id SERIAL PRIMARY KEY,
                 nome_pagina TEXT,
@@ -39,13 +29,14 @@ def create_table_if_not_exists():
                 id_pagina TEXT,
                 id_conta_anuncio TEXT
             );
-            """
-        )
+        """)
         conn.commit()
     conn.close()
 
 def fetch_data():
-    """Retorna todas as linhas da tabela 'paginas' como um DataFrame pandas."""
+    """
+    Retorna todas as linhas da tabela 'paginas' em um DataFrame pandas.
+    """
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute("SELECT * FROM paginas;")
@@ -59,12 +50,17 @@ def fetch_data():
     return df
 
 def insert_data(nome_pagina, conta_anuncio, token_pagina, id_pagina, id_conta_anuncio):
-    """Insere uma nova linha na tabela 'paginas'."""
+    """
+    Insere uma nova linha na tabela 'paginas'.
+    """
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute(
             """
-            INSERT INTO paginas (nome_pagina, conta_anuncio, token_pagina, id_pagina, id_conta_anuncio)
+            INSERT INTO paginas (
+                nome_pagina, conta_anuncio,
+                token_pagina, id_pagina, id_conta_anuncio
+            )
             VALUES (%s, %s, %s, %s, %s)
             """,
             (nome_pagina, conta_anuncio, token_pagina, id_pagina, id_conta_anuncio)
@@ -74,19 +70,22 @@ def insert_data(nome_pagina, conta_anuncio, token_pagina, id_pagina, id_conta_an
 
 def overwrite_table_with_df(df_editado):
     """
-    Limpa a tabela 'paginas' e insere tudo que estiver em df_editado.
-    (Abordagem simples para sincronizar com o data_editor.)
+    Limpa a tabela 'paginas' e reinsere tudo do df_editado.
+    Abordagem simples para sincronizar com data_editor.
     """
     conn = get_connection()
     with conn.cursor() as cur:
         # 1) Limpa tabela
         cur.execute("TRUNCATE TABLE paginas RESTART IDENTITY;")
 
-        # 2) Reinsere tudo
-        for i, row in df_editado.iterrows():
+        # 2) Reinsere cada linha do DataFrame
+        for _, row in df_editado.iterrows():
             cur.execute(
                 """
-                INSERT INTO paginas (nome_pagina, conta_anuncio, token_pagina, id_pagina, id_conta_anuncio)
+                INSERT INTO paginas (
+                    nome_pagina, conta_anuncio,
+                    token_pagina, id_pagina, id_conta_anuncio
+                )
                 VALUES (%s, %s, %s, %s, %s)
                 """,
                 (
