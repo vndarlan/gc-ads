@@ -3,19 +3,11 @@ import psycopg2
 import pandas as pd
 
 def get_connection():
-    """
-    Conecta no Postgres usando uma única variável:
-    st.secrets["DATABASE_URL"] (string de conexão completa).
-    """
-    db_url = st.secrets["DATABASE_URL"]  # Ex: "postgresql://user:pass@host:port/dbname"
+    db_url = st.secrets["DATABASE_URL"]  # Lê a string do secrets
     conn = psycopg2.connect(db_url)
     return conn
 
 def create_table_if_not_exists():
-    """
-    Cria a tabela 'paginas' se ainda não existir.
-    Ajuste colunas se necessário.
-    """
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute("""
@@ -32,10 +24,6 @@ def create_table_if_not_exists():
     conn.close()
 
 def fetch_data():
-    """
-    Puxa todos os registros de 'paginas' e retorna em DataFrame.
-    Colunas: id, nome_pagina, conta_anuncio, token_pagina, id_pagina, id_conta_anuncio.
-    """
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute("SELECT * FROM paginas;")
@@ -48,9 +36,6 @@ def fetch_data():
     return df
 
 def insert_data(nome_pagina, conta_anuncio, token_pagina, id_pagina, id_conta_anuncio):
-    """
-    Insere nova linha na tabela 'paginas'.
-    """
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute(
@@ -69,16 +54,9 @@ def insert_data(nome_pagina, conta_anuncio, token_pagina, id_pagina, id_conta_an
     conn.close()
 
 def overwrite_table_with_df(df_editado):
-    """
-    Exemplo simples: apaga tudo e reinsere conforme 'df_editado'.
-    (Útil se estiver usando st.experimental_data_editor)
-    """
     conn = get_connection()
     with conn.cursor() as cur:
-        # Limpa tabela
         cur.execute("TRUNCATE TABLE paginas RESTART IDENTITY;")
-
-        # Reinsere cada linha
         for _, row in df_editado.iterrows():
             cur.execute(
                 """

@@ -1,6 +1,5 @@
 import streamlit as st
 import requests
-
 from db_utils import fetch_data
 
 def app():
