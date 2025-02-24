@@ -16,6 +16,7 @@ def app():
         nome_pagina = st.text_input("Nome da Página:")
         conta_anuncio = st.text_input("Nome/Apelido da Conta de Anúncio:")
         token_pagina = st.text_input("Token da Página (se precisar enviar no payload):")
+        vencimento_do_token = st.text_input("Quando o token vence:")
         id_pagina = st.text_input("ID da Página Facebook:")
         id_conta_anuncio = st.text_input("ID da Conta de Anúncio Facebook:")
 
@@ -23,7 +24,7 @@ def app():
             if not nome_pagina.strip() or not conta_anuncio.strip():
                 st.error("Nome da Página e Conta de Anúncio são obrigatórios!")
             else:
-                insert_data(nome_pagina, conta_anuncio, token_pagina, id_pagina, id_conta_anuncio)
+                insert_data(nome_pagina, conta_anuncio, token_pagina, vencimento_do_token, id_pagina, id_conta_anuncio)
                 st.success("Página/Conta adicionada com sucesso!")
 
     st.write("---")
@@ -34,8 +35,11 @@ def app():
         st.info("Não há dados cadastrados ainda.")
         return
 
+    # Reordena as colunas para o formato desejado na tela de configurações
     df_sem_id = df.drop(columns=["id"])
-    df_editado = st.data_editor(  # Atualizado para data_editor estável
+    df_sem_id = df_sem_id[["nome_pagina", "conta_anuncio", "token_pagina", "id_pagina", "id_conta_anuncio", "vencimento_do_token"]]
+    
+    df_editado = st.data_editor(
         df_sem_id,
         num_rows="dynamic",
         key="data_editor_gerenciar"
