@@ -45,9 +45,8 @@ def fetch_data():
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM paginas;")
             # OBSERVAÇÃO:
-            # Apesar da definição original dos campos (nome_pagina, conta_anuncio, token_pagina, vencimento_do_token, id_pagina, id_conta_anuncio),
-            # o ALTER TABLE fez com que a coluna 'vencimento_do_token' ficasse no final da tabela.
-            # Assim, a ordem real dos campos é:
+            # Apesar da definição original dos campos, o ALTER TABLE fez com que a coluna 'vencimento_do_token'
+            # ficasse no final da tabela. Assim, a ordem real dos campos é:
             # [id, nome_pagina, conta_anuncio, token_pagina, id_pagina, id_conta_anuncio, vencimento_do_token]
             return pd.DataFrame(
                 cur.fetchall(),

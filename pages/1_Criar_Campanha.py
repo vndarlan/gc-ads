@@ -1,25 +1,30 @@
+# Facebook.py (na pasta pages)
 import streamlit as st
 import requests
 import sys
 import os
 import datetime
 import pandas as pd
-import base64
+
+# Configura a página para largura completa
+st.set_page_config(page_title="GC IA & Automações", layout="centered")
 
 # Configurar caminhos para importação
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from db_utils import fetch_data, insert_data, overwrite_table_with_df
 
-# Configuração do webhook
-WEBHOOK_URL = "https://primary-production-7d92.up.railway.app/webhook-test/f708e609-9e8b-4940-9cec-55c8cdceb2f7"
+# URL do seu Webhook (ajuste se necessário)
+WEBHOOK_URL = "https://primary-production-7d92.up.railway.app/webhook/f708e609-9e8b-4940-9cec-55c8cdceb2f7"
 
 def inicializar_estado():
-    """Inicializa todas as variáveis de sessão necessárias"""
+    """Inicializa todas as variáveis de sessão necessárias."""
     estados_necessarios = {
         'show_config': False,
         'dados_carregados': False,
         'debug_mode': False,
-        'conta_info': None
+        'conta_info': None,
+        'nome_video': "",           # Inicializado para evitar erro de atributo inexistente
+        'nome_imagem_anuncio': ""   # Inicializado para evitar erro de atributo inexistente
     }
     for chave, valor in estados_necessarios.items():
         if chave not in st.session_state:
@@ -42,6 +47,7 @@ def carregar_e_exibir_formulario():
         if df.empty:
             st.warning("Nenhuma página cadastrada. Primeiro cadastre em 'Gerenciar Páginas'.")
             return
+
         pagina_selecionada = st.selectbox("Selecione a Página:", df['nome_pagina'].unique(), key='seletor_pagina')
         st.session_state.pagina_selecionada = pagina_selecionada
 
@@ -63,16 +69,16 @@ def carregar_e_exibir_formulario():
             with st.form(key="form_campanha", clear_on_submit=True):
                 st.subheader("Configurações da Campanha")
                 
-                # Obter informações da conta
+                # Obter informações da conta selecionada
                 conta_info = obter_info_conta(df, pagina_selecionada)
-                
+
                 # Seções do formulário
                 secao_config_basicas(conta_info)
                 secao_publico_alvo()
                 secao_conteudo_criativo()
                 secao_config_avancadas()
                 secao_conjuntos_anuncios()  # Utiliza st.session_state.qtd_conjuntos
-                
+
                 col1, col2, col3 = st.columns([1, 1, 2])
                 with col2:
                     if st.form_submit_button("Salvar Rascunho"):
@@ -84,16 +90,16 @@ def carregar_e_exibir_formulario():
         st.error(f"Falha ao carregar dados: {str(e)}")
 
 def obter_info_conta(df, pagina_selecionada):
-    """Obtém as informações da conta selecionada"""
+    """Obtém as informações da conta selecionada a partir do DataFrame."""
     df_filtrado = df[df['nome_pagina'] == pagina_selecionada]
     if df_filtrado.empty:
-        raise ValueError("Nenhuma conta encontrada para a página selecionada")
+        raise ValueError("Nenhuma conta encontrada para a página selecionada.")
     
     conta_selecionada = st.selectbox("Selecione a Conta:", df_filtrado['conta_anuncio'].unique(), key='seletor_conta')
     return df_filtrado[df_filtrado['conta_anuncio'] == conta_selecionada].iloc[0]
 
 def secao_config_basicas(conta_info):
-    """Configurações Básicas da Campanha"""
+    """Configurações Básicas da Campanha."""
     with st.expander("⚙️ Configurações Básicas", expanded=True):
         st.text_input("Nome da Campanha*", key='nome_campanha')
         col1, col2 = st.columns(2)
@@ -109,7 +115,7 @@ def secao_config_basicas(conta_info):
         st.selectbox("Evento de Conversão", options=["Compra"], disabled=True, key='evento_conversao')
         st.text_input("Campanha", value="Leilao", disabled=True, key='campanha')
         
-        # Armazenar informações da conta
+        # Armazenar informações da conta no session_state
         st.session_state.account_id = conta_info['id_conta_anuncio']
         st.session_state.page_token = conta_info['token_pagina']
         st.session_state.conta_info = {
@@ -120,7 +126,7 @@ def secao_config_basicas(conta_info):
         }
 
 def secao_publico_alvo():
-    """Configurações de Público-Alvo com aba de Idioma"""
+    """Configurações de Público-Alvo com aba de Idioma."""
     with st.expander("🎯 Público-Alvo", expanded=True):
         tab_dados, tab_idioma = st.tabs(["Dados", "Idioma"])
         with tab_dados:
@@ -134,38 +140,51 @@ def secao_publico_alvo():
             st.selectbox("Idioma", options=["6", "8", "16", "23", "53"], key='idioma')
 
 def secao_conteudo_criativo():
-    """Conteúdo Criativo da Campanha"""
+    """Conteúdo Criativo da Campanha (sem upload de imagem, apenas nome)."""
     with st.expander("🎨 Conteúdo Criativo", expanded=True):
+        # Campo para o nome do vídeo principal
+        st.text_input("Nome do Anúncio", key='nome_video')
+        
         # 5 caixas de texto grandes para os Textos Principais
         for i in range(1, 6):
-            st.text_area(f"Texto Principal {i}", height=100, placeholder="Digite o texto do anúncio...", key=f"texto_principal_{i}")
+            st.text_area(
+                f"Texto Principal {i}",
+                height=100,
+                placeholder="Digite o texto do anúncio...",
+                key=f"texto_principal_{i}"
+            )
+
         col1, col2 = st.columns(2)
         with col1:
             st.text_input("URL de Destino*", placeholder="https://seusite.com/oferta", key='url_destino')
         with col2:
             st.text_input("URL de Exibição", value="https://seusite.com", key='url_exibicao')
-        st.file_uploader("Imagem do Anúncio*", type=["png", "jpg", "jpeg"], key='imagem_anuncio')
+        
+        # Campo para o nome da imagem do anúncio
+        st.text_input("Nome da Imagem do Anúncio*", key='nome_imagem_anuncio')
 
 def secao_config_avancadas():
-    """Configurações Avançadas (valores fixos e não opcionais)"""
+    """Configurações Avançadas (valores fixos e não opcionais)."""
     with st.expander("🔧 Configurações Avançadas"):
         st.text_input("Posicionamento", value="Posicionamento Manual → Dispositivos: Celular", disabled=True, key='posicionamento')
         st.text_input("Conexão", value="Somente quando conectada a uma rede wifi", disabled=True, key='conexao_wifi')
 
 def secao_conjuntos_anuncios():
-    """Seção para definir os conjuntos de anúncios e seus respectivos vídeos"""
+    """Seção para definir os conjuntos de anúncios e seus respectivos vídeos."""
     with st.expander("📦 Conjuntos de Anúncios"):
         qtd = st.session_state.qtd_conjuntos
         for i in range(int(qtd)):
             st.text_input(f"Nome do Vídeo para Conjunto {i+1}", key=f"nome_video_conjunto_{i}")
 
 def salvar_rascunho():
+    """Simples feedback de salvamento de rascunho."""
     try:
         st.success("Rascunho salvo com sucesso!")
     except Exception as e:
         st.error(f"Erro ao salvar: {str(e)}")
 
 def publicar_campanha():
+    """Ao publicar, valida o formulário, constrói o payload e envia ao Webhook."""
     try:
         if validar_formulario():
             payload = construir_payload()
@@ -177,12 +196,12 @@ def publicar_campanha():
         st.error(f"Erro na publicação: {str(e)}")
 
 def validar_formulario():
-    """Valida os campos obrigatórios do formulário"""
+    """Valida os campos obrigatórios do formulário."""
     erros = {}
     campos_obrigatorios = {
         'nome_campanha': 'Nome da campanha é obrigatório',
         'url_destino': 'URL de destino inválida',
-        'imagem_anuncio': 'Imagem do anúncio é obrigatória',
+        'nome_imagem_anuncio': 'Nome da imagem do anúncio é obrigatório',
         'objetivo': 'Selecione um objetivo',
         'tipo_orcamento': 'Selecione o tipo de orçamento'
     }
@@ -190,18 +209,20 @@ def validar_formulario():
         valor = st.session_state.get(campo)
         if not valor or (isinstance(valor, str) and not valor.strip()):
             erros[campo] = mensagem
+
+    # Verifica se a URL de destino começa com http:// ou https://
     if st.session_state.url_destino and not st.session_state.url_destino.startswith(("http://", "https://")):
         erros['url_destino'] = "URL de destino deve começar com http:// ou https://"
+
     if erros:
         for erro in erros.values():
             st.error(erro)
         return False
+
     return True
 
 def construir_payload():
-    """Constrói o payload com todos os dados do formulário para envio ao webhook"""
-    imagem = st.session_state.imagem_anuncio
-
+    """Constrói o payload com todos os dados do formulário para envio ao webhook."""
     # Coleta os 5 textos principais
     textos_principais = []
     for i in range(1, 6):
@@ -257,16 +278,15 @@ def construir_payload():
                 "idioma": st.session_state.idioma
             },
             "criativo": {
-                "nome_video": st.session_state.nome_video,
+                "nome_video": st.session_state.get("nome_video", ""),
                 "textos_principais": textos_principais,
                 "urls": {
                     "destino": st.session_state.url_destino,
                     "exibicao": st.session_state.url_exibicao
                 },
                 "midia": {
-                    "nome_arquivo": imagem.name if imagem else None,
-                    "tipo_midia": imagem.type if imagem else None,
-                    "conteudo_base64": base64.b64encode(imagem.getvalue()).decode('utf-8') if imagem else None
+                    # Aqui enviamos apenas o nome do arquivo, sem upload/base64
+                    "nome_arquivo": st.session_state.get("nome_imagem_anuncio", "")
                 }
             },
             "configuracoes_avancadas": {
@@ -282,7 +302,7 @@ def construir_payload():
     }
 
 def enviar_webhook(payload):
-    """Envia os dados para o webhook e trata a resposta"""
+    """Envia os dados para o webhook e trata a resposta."""
     try:
         with st.spinner("Enviando dados..."):
             resposta = requests.post(WEBHOOK_URL, json=payload, timeout=15)
@@ -300,3 +320,4 @@ def enviar_webhook(payload):
 
 if __name__ == "__main__":
     main()
+

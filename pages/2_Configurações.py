@@ -3,6 +3,9 @@ import pandas as pd
 import sys
 import os
 
+# Configura a página para largura completa
+st.set_page_config(page_title="GC IA & Automações", layout="centered")
+
 # Adiciona o diretório pai ao Python Path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -51,3 +54,4 @@ def app():
 
 if __name__ == "__main__":
     app()
+
